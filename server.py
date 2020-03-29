@@ -14,4 +14,4 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     if len(args)<2:
         args = ["127.0.0.1", "5000"]
-    app.run(debug=True, host=args[0], port=args[1], threaded=False)
+    app.run(debug=False, host=args[0], port=args[1], threaded=False)
