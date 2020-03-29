@@ -1,4 +1,3 @@
 currencyconverter
 requests
-logging
 Flask
