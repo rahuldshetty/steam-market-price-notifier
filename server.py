@@ -6,6 +6,7 @@ import sys
 import datetime
 from os import environ
 from flask import Flask, escape, request, render_template, redirect, url_for, session
+from steam_market_api import *
 from db_helpler import *
 
 
@@ -52,10 +53,25 @@ def index():
         cursor = conn.execute(s_query)
         row = cursor.fetchone()
         if row:
+            uid = row[0]
             name = row[1]
             password = row[2]
             if hash_v == hash_string(email + name + password):
-                return render_template("index.html")
+
+                # get all links based on UID
+                link_list = []
+                link_query = "SELECT URL, NAME, MONEY, CURRENCY from LINKS where UID={}".format(uid)
+                cursor = conn.execute(link_query)
+                for row in cursor.fetchall():
+                    lowest_price = get_current_item_low_price(row[0], row[3])
+                    link_list.append({
+                        "link": row[0],
+                        "name": row[1],
+                        "money": row[2],
+                        "currency": row[3],
+                        "lowest_price": lowest_price
+                    })
+                return render_template("index.html", user={'name': name}, links=link_list, currencies=CURRENCY_LIST)
             else:
                 return redirect(url_for('home'))
         else:
@@ -64,6 +80,51 @@ def index():
     else:
         return redirect(url_for('home'))
 
+@app.route('/add_link', methods=["POST"])
+def add_link():
+    form = request.form
+    if "hash" in session and "email" in session:
+        # logged in
+        email = session['email']
+        if "link" in form and "money" in form and "currency" in form:
+            link = form['link']
+            money = round(float(form['money']), 2)
+            currency = form['currency']
+            # get uid
+            s_query = "SELECT UID, NAME from USERS where EMAIL='{}'".format(email)
+            conn = sqlite3.connect('database.db')
+            cursor = conn.execute(s_query)
+            row = cursor.fetchone()
+            if row:
+                # there exists one element in row
+                uid = row[0]
+                user = row[1]
+                name = (link.split('/')[-1]).replace("%20"," ")
+                # insert query for link table
+                l_query = "INSERT INTO LINKS(NAME, URL, MONEY, CURRENCY, UID) VALUES('{}','{}', {}, '{}', {})"
+                l_query = l_query.format(
+                    name,
+                    link,
+                    money,
+                    currency,
+                    uid
+                )
+                try:
+                    cursor.execute(l_query)
+                    conn.commit()
+                except Exception as error:
+                    LOGGER.error("%s link exists for user %s", link, user)
+                return redirect(url_for('home'))
+                
+            else:
+                # no users found
+                LOGGER.error("No users found: %s", email)
+                return redirect(url_for('logout'))
+        else:
+            return redirect(url_for('logout'))
+    else:
+        return redirect(url_for('logout'))
+ 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = request.form

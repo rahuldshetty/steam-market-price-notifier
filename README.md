@@ -14,7 +14,7 @@ Link: [Steam Market Notifier](https://steam-market-notifier.herokuapp.com/)
 - [x] Create an API to request price of an steam item and convert it to required currency.
 - [x] Create a Flask based Application
 - [x] Create a basic Login and Register functionality for a user
-- [ ] Monitor Price Tool *
+- [x] Monitor Price Tool *
 - [ ] Send notification to emails.
 - [ ] Provide a Search box for the User to search for an Steam community market item.
 - [ ] Activate account, Forget Password and other improtant Email authentication mechanisms to provide security.

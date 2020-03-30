@@ -8,7 +8,7 @@ from currency_converter import CurrencyConverter
 from utils import *
 
 CONVERTER = CurrencyConverter()
-CURRENCY_LIST = list(CONVERTER.currencies)
+CURRENCY_LIST = sorted(list(CONVERTER.currencies))
 
 STEAM_LINK = "https://steamcommunity.com/market/priceoverview/?appid={}&market_hash_name={}&currency=1"
 
@@ -66,7 +66,7 @@ def get_current_item_low_price(link, currency="INR"):
             lowest_price = re.sub('[^0-9.]', '', response_json['lowest_price'])
             converted_value = CONVERTER.convert(lowest_price, "USD", currency)
 
-            return converted_value
+            return round(converted_value, 2)
         else:
             LOGGER.error("No AppID found in link - %s", link)
             return None
