@@ -4,7 +4,8 @@ Stream Market Notifier allows you to keep track of prices of various Steam items
 
 Link: [Steam Market Notifier](https://steam-market-notifier.herokuapp.com/)
 
-Features/Requirements:
+# Features/Requirements:
+
 - [x] Setup Project for Heroku Deployment
 - [x] Create an API to request price of an steam item and convert it to required currency.
 - [x] Create a Flask based Application for the frontend.
