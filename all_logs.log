@@ -1,0 +1,4 @@
+2020-03-30 20:04:39,220 : ERROR : utils : Exception - SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 13916 and this is thread id 5652.
+2020-03-30 20:04:46,384 : ERROR : utils : Exception - SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 13916 and this is thread id 8220.
+2020-03-30 20:04:56,349 : ERROR : utils : Exception - SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 13916 and this is thread id 1112.
+2020-03-30 20:13:14,901 : ERROR : utils : Exception - UNIQUE constraint failed: USERS.EMAIL

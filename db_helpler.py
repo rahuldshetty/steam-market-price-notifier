@@ -6,7 +6,6 @@ users and items locally
 import sqlite3
 from utils import *
 
-conn = sqlite3.connect('database.db')
 LOGGER.info("Opened database connection")
 
 '''
@@ -23,12 +22,13 @@ def create_tables():
     '''
     Create a user and links table
     '''
+    conn = sqlite3.connect('database.db')
     conn.execute('''
         Create TABLE IF NOT EXISTS USERS
         (
-            UID INTEGER AUTOINCREMENT,
+            UID INTEGER PRIMARY KEY AUTOINCREMENT,
             NAME VARCHAR(20) NOT NULL,
-            EMAIL VARCHAR(30) PRIMARY KEY NOT NULL,
+            EMAIL VARCHAR(30) NOT NULL UNIQUE,
             PASSWORD VARCHAR(500) NOT NULL
         );
     ''')
@@ -45,26 +45,7 @@ def create_tables():
     ''')
     LOGGER.info("Instantiated Tables: USERS, LINKS")
 
-def create_user(name, email, password):
-    '''
-    Adds a user into the database
-    '''
-    # hash the password
-    password = hash_string(password)
-
-    # insert query for user table
-    query = "INSERT INTO USERS(NAME, EMAIL, PASSWORD) VALUES('{}','{}','{}')"
-    query = query.format(
-        name,
-        email,
-        password
-    )
-
-    conn.execute(query)
-    conn.commit()
-    LOGGER.info("Inserted User: %s", name)
-
-def create_link(name, link, email):
+def create_link(conn, name, link, email):
     '''
     Adds a link to a particular user
     '''
@@ -86,6 +67,7 @@ def create_link(name, link, email):
         # commit the row
         conn.execute(l_query)
         conn.commit()
+        return True
     else:
         LOGGER.error("No User with email %s found.", email)
-
+        return False
