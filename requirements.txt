@@ -1,3 +1,4 @@
 currencyconverter
 requests
 Flask
+apscheduler==3.6.3

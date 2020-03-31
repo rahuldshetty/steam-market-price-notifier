@@ -3,15 +3,47 @@ This package contains server related methods.
 '''
 import sqlite3
 import sys
+import time
 import datetime
 from os import environ
 from flask import Flask, escape, request, render_template, redirect, url_for, session
+from apscheduler.schedulers.background import BackgroundScheduler
 from steam_market_api import *
 from db_helpler import *
 
-
 app = Flask(__name__)
 app.secret_key = hash_string(str(datetime.datetime.now()))
+
+def execute_cost_computation_job():
+    print("Started executing Cost Computation Job at %s", str(datetime.datetime.now()))
+    # get all links
+    conn = sqlite3.connect('database.db')
+    link_query = "SELECT URL, NAME, MONEY, CURRENCY, UID from LINKS"
+    cursor = conn.execute(link_query)
+
+    items_low_price_for_user = []
+    for row in cursor.fetchall():
+        link = row[0]
+        name = row[1]
+        money = row[2]
+        currency = row[3]
+        uid = row[4]
+        lowest_price = get_current_item_low_price(link, currency)
+        if lowest_price <= money:
+            items_low_price_for_user.append({
+                "link": link,
+                "name": name,
+                "price": lowest_price,
+                "currency": currency,
+                "uid": uid
+            })
+    # send emails to all the users
+    print(items_low_price_for_user)
+    print("Completed executing Cost Computation Job at %s", str(datetime.datetime.now()))
+
+sched = BackgroundScheduler(daemon=True)
+sched.add_job(execute_cost_computation_job, 'interval', minutes=1)
+sched.start()
 
 # Database related processing
 create_tables()
@@ -202,4 +234,4 @@ def register():
         return redirect(url_for('home', error="Please check your email id, password and try again."))
 
 if __name__ == '__main__':
-    app.run(debug=False, host="0.0.0.0", port=environ.get("PORT", 5000))
+    app.run(debug=True, host="127.0.0.1", port=environ.get("PORT", 5000))
