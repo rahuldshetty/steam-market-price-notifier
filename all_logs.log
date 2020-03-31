@@ -1,6 +1,2 @@
-2020-03-30 20:04:39,220 : ERROR : utils : Exception - SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 13916 and this is thread id 5652.
-2020-03-30 20:04:46,384 : ERROR : utils : Exception - SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 13916 and this is thread id 8220.
-2020-03-30 20:04:56,349 : ERROR : utils : Exception - SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 13916 and this is thread id 1112.
-2020-03-30 20:13:14,901 : ERROR : utils : Exception - UNIQUE constraint failed: USERS.EMAIL
-2020-03-31 01:32:14,715 : ERROR : utils : https://steamcommunity.com/market/listings/570/Manifold%20Paradox link exists for user Rahul
-2020-03-31 01:32:16,248 : ERROR : utils : https://steamcommunity.com/market/listings/570/Manifold%20Paradox link exists for user Rahul
+2020-04-01 01:56:09,276 : ERROR : utils : Exception -  is not a supported currency
+2020-04-01 01:56:31,910 : ERROR : utils : Exception -  is not a supported currency

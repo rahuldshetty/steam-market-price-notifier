@@ -36,13 +36,14 @@ def create_tables():
     conn.execute('''
         Create TABLE IF NOT EXISTS LINKS
         (
+            LID INTEGER PRIMARY KEY AUTOINCREMENT,
             NAME VARCHAR(20) NOT NULL,
             URL VARCHAR(1000),
             MONEY DOUBLE(7, 2),
             CURRENCY VARCHAR(10),
             UID INTEGER,
             FOREIGN KEY(UID) REFERENCES USERS(UID),
-            PRIMARY KEY(URL, UID)
+            UNIQUE(URL, UID)
         )
     ''')
     LOGGER.info("Instantiated Tables: USERS, LINKS")

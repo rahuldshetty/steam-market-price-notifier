@@ -14,6 +14,8 @@ from db_helpler import *
 app = Flask(__name__)
 app.secret_key = hash_string(str(datetime.datetime.now()))
 
+TIME_INTERVAL_FOR_JOB_MINUTES = 30
+
 def execute_cost_computation_job():
     print("Started executing Cost Computation Job at %s", str(datetime.datetime.now()))
     # get all links
@@ -21,7 +23,7 @@ def execute_cost_computation_job():
     link_query = "SELECT URL, NAME, MONEY, CURRENCY, UID from LINKS"
     cursor = conn.execute(link_query)
 
-    items_low_price_for_user = []
+    items_low_price_for_user = {}
     for row in cursor.fetchall():
         link = row[0]
         name = row[1]
@@ -30,19 +32,28 @@ def execute_cost_computation_job():
         uid = row[4]
         lowest_price = get_current_item_low_price(link, currency)
         if lowest_price <= money:
-            items_low_price_for_user.append({
-                "link": link,
-                "name": name,
-                "price": lowest_price,
-                "currency": currency,
-                "uid": uid
-            })
+            if uid in items_low_price_for_user:
+                items_low_price_for_user[uid].append({
+                    "link": link,
+                    "name": name,
+                    "price": lowest_price,
+                    "currency": currency,
+                    "uid": uid
+                })
+            else:
+                items_low_price_for_user[uid] = [{
+                    "link": link,
+                    "name": name,
+                    "price": lowest_price,
+                    "currency": currency,
+                    "uid": uid
+                }]
     # send emails to all the users
     print(items_low_price_for_user)
     print("Completed executing Cost Computation Job at %s", str(datetime.datetime.now()))
 
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(execute_cost_computation_job, 'interval', minutes=1)
+sched.add_job(execute_cost_computation_job, 'interval', minutes=TIME_INTERVAL_FOR_JOB_MINUTES)
 sched.start()
 
 # Database related processing
@@ -92,7 +103,7 @@ def index():
 
                 # get all links based on UID
                 link_list = []
-                link_query = "SELECT URL, NAME, MONEY, CURRENCY from LINKS where UID={}".format(uid)
+                link_query = "SELECT URL, NAME, MONEY, CURRENCY, LID from LINKS where UID={}".format(uid)
                 cursor = conn.execute(link_query)
                 for row in cursor.fetchall():
                     lowest_price = get_current_item_low_price(row[0], row[3])
@@ -101,7 +112,8 @@ def index():
                         "name": row[1],
                         "money": row[2],
                         "currency": row[3],
-                        "lowest_price": lowest_price
+                        "lowest_price": lowest_price,
+                        "lid": row[4]
                     })
                 return render_template("index.html", user={'name': name}, links=link_list, currencies=CURRENCY_LIST)
             else:
@@ -111,6 +123,8 @@ def index():
             return redirect(url_for('home'))
     else:
         return redirect(url_for('home'))
+
+# LINK API SECTION
 
 @app.route('/add_link', methods=["POST"])
 def add_link():
@@ -157,6 +171,61 @@ def add_link():
     else:
         return redirect(url_for('logout'))
  
+@app.route('/edit_link', methods=["POST"])
+def edit_link():
+    form = request.form
+    if "hash" in session and "email" in session:
+        # logged in
+        email = session['email']
+        if "link" in form and "money" in form and "currency" in form:
+            link = form['link']
+            lid = form['lid']
+            name = (link.split('/')[-1]).replace("%20"," ")
+            money = round(float(form['money']), 2)
+            currency = form['currency']
+            # update query query for link table
+            l_query = "UPDATE LINKS SET URL = '{}', MONEY = {} , CURRENCY = '{}' WHERE LID = {};".format(
+                link,
+                money,
+                currency,
+                lid
+            )
+            try:
+                conn = sqlite3.connect('database.db')
+                conn.execute(l_query)
+                conn.commit()
+            except Exception as error:
+                LOGGER.error("Exception - %s", error)
+            return redirect(url_for('index'))
+        else:
+            return redirect(url_for('index'))
+    else:
+        return redirect(url_for('logout'))
+
+@app.route('/delete_link', methods=["POST"])
+def delete_link():
+    form = request.form
+    if "hash" in session and "email" in session:
+        # logged in
+        if "lid" in form:
+            lid = form['lid']
+            l_query = "DELETE FROM LINKS WHERE LID = {};".format(
+                lid
+            )
+            try:
+                conn = sqlite3.connect('database.db')
+                conn.execute(l_query)
+                conn.commit()
+            except Exception as error:
+                LOGGER.error("Exception - %s", error)
+            return redirect(url_for('index'))
+        else:
+            return redirect(url_for('index'))
+    else:
+        return redirect(url_for('logout'))
+
+# LOGIN SECTION
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = request.form
@@ -194,6 +263,8 @@ def logout():
 @app.errorhandler(404)
 def page_not_found(event):
     return redirect(url_for('home', error="Error 404"))
+
+# REGISTER SECTION
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -234,4 +305,4 @@ def register():
         return redirect(url_for('home', error="Please check your email id, password and try again."))
 
 if __name__ == '__main__':
-    app.run(debug=True, host="127.0.0.1", port=environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=environ.get("PORT", 5000))

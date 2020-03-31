@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Steam Market Notifier</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">   
 </head>
+<style>
+.spcl-btn{
+    margin: 15px;
+}
+</style>
 <body>
-    <div class="navbar">
+    <div class="navbar-fixed">
         <nav>
             <div class="nav-wrapper">
             <a href="#" class="brand-logo">Steam Market Notifier</a>
@@ -79,7 +84,14 @@
                             <div class="collection">
                             {% for link in links %}
                             <div>
-                                <a href="{{ link['link'] }}" class="collection-item">
+                                <a class="waves-effect waves-light red btn spcl-btn right modal-trigger" onclick='set_delete_params("{{ link.link }}", "{{ link.name }}", "{{ link.lid }}")' href="#modal2"><i class="material-icons right">delete</i>Delete</a>
+                                
+                                <a class="waves-effect waves-light btn right spcl-btn modal-trigger" onclick='set_params("{{ link.link }}", "{{ link.money }}", "{{ link.currency }}", "{{ link.lid }}")' href="#modal1"><i class="material-icons right">edit</i>Edit</a>
+                                {% if link['money'] >= link['lowest_price'] %}
+                                    <a href="{{ link['link'] }}" class="collection-item blue-text text-darken-2 left">
+                                {% else %}
+                                    <a href="{{ link['link'] }}" class="collection-item">
+                                {% endif %}
                                     <div>
                                         {{ link['name'] }}
                                         <p>Current Lowest Price: {{ link['currency'] }}  {{ link['lowest_price'] }}</p>
@@ -95,10 +107,68 @@
               </div>
         </div>
     </div>
+    <!-- Modal for Edit Link -->
+    <div id="modal1" class="modal">
+        <div class="modal-content">
+          <h4>Edit</h4>
+          <div class="row">
+            <form method="POST" action='/edit_link'>
+                <div class="input-field col s12">
+                    <i class="material-icons prefix">web</i>
+                    <input id="link_modal" type="url" class="validate" name="link" placeholder="">
+                    <label for="link_modal">Paste URL here</label>
+                </div>   
+                <div class="input-field col s12">
+                    <i class="material-icons prefix">money</i>
+                    <input id="threshold_modal" type="number" class="validate" name="money" placeholder="">
+                    <label for="threshold_modal">Enter Amount</label>
+                </div> 
+                <div class="input-field col s6">
+                    <i class="material-icons prefix">place</i>
+                    <select onchange="onselect_change2()" id="currency_dropdown_modal" class="myselect">
+                      <option value="" disabled>Select Currency</option>
+                      {% for currency in currencies %}
+                            <option value="{{ currency }}">{{ currency }}</option>
+                      {%endfor%}
+                    </select>
+                    <label>Currency</label>
+                </div>
+                <input name="currency" id="cur_modal" type="hidden" value="">
+                <input name="lid" id="lid_modal" type="hidden" value="">
+                <div class="col s12 center modal-footer">
+                    <button class="btn waves-effect waves-light" type="submit">Save
+                        <i class="material-icons right">save</i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        </div>
+    </div>
+    <!-- Modal for Delete Link -->
+    <div id="modal2" class="modal">
+        <div class="modal-content">
+          <h4>Confirm Delete</h4>
+              <p id="delete_paragraph"></p>
+              <a href="" id="delete_link_href"></a>
+              <form method="POST" action="/delete_link">
+                <input name="lid" id="link_delete_desc" type="hidden" value="">
+                <div class="col s12 center modal-footer">
+                    <button class="btn waves-effect waves-light red" type="submit">Confirm
+                        <i class="material-icons right">delete</i>
+                    </button>
+                </div>
+              </form>
+        </div>
+    </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var elems = document.querySelectorAll('select');
         var instances = M.FormSelect.init(elems);
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.modal');
+        var instances = M.Modal.init(elems);
     });
 
     function onselect_change(){
@@ -106,6 +176,41 @@
         var cur = e.options[e.selectedIndex].value;
         document.getElementById('cur').value = cur;
     }
+
+    function onselect_change2(){
+        var e = document.getElementById("currency_dropdown_modal");
+        var cur = e.options[e.selectedIndex].value;
+        document.getElementById('cur_modal').value = cur;
+    }
+
+    function set_params(link, amount, currency, lid){
+        var modal_url = document.getElementById('link_modal');
+        modal_url.value = link;
+
+        var modal_lid = document.getElementById('lid_modal');
+        modal_lid.value = lid;
+
+        var modal_amount = document.getElementById('threshold_modal');
+        modal_amount.value = amount;
+
+        var select_drowdown = document.getElementById('currency_dropdown_modal');
+        select_drowdown.value = currency;
+        var elems = document.querySelectorAll('select');
+        var instances = M.FormSelect.init(elems);
+
+        document.getElementById('cur_modal').value = currency;        
+    }
+
+    function set_delete_params(link, name, lid){   
+        let string = "Click Confirm to delete the following item:";
+        document.getElementById("delete_paragraph").innerText =  string;
+        var link_obj = document.getElementById("delete_link_href");
+        link_obj.innerText = name;
+        link_obj.href = link;
+
+        document.getElementById("link_delete_desc").value = lid;
+    }
+
 </script>
 </body>
 </html>
